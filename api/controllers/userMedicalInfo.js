@@ -8,7 +8,7 @@ const { verifyToken } = require("../services/jwtService.js");
 
 //Creating store med data:
 
-const storeMedData = router.post("/storemedicalData",  async (req, res) => {
+const storeMedData = router.post("/storemedicoreData",  async (req, res) => {
   const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
