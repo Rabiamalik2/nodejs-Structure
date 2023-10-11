@@ -6,6 +6,29 @@ const secretKey = "secretkey";
 const saltRounds = 10;
 const express = require("express");
 const router = express.Router();
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
+const { google } = require("googleapis");
+
+/*POPULATE BELOW FIELDS WITH YOUR CREDETIALS*/
+
+const CLIENT_ID =
+  "416536186096-rvpm7dp5iig0oasn1snr6r63flcsemoa.apps.googleusercontent.com";
+const CLIENT_SECRET = "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";
+const REFRESH_TOKEN =
+  "1//04soVA-8F8ZO3CgYIARAAGAQSNwF-L9IrZVsKYr1oI6xqzkQ_jlcBHerHXk6A1GumViNEN5WF5-b0U-HCRgofKbY-0ter3zjkl0o";
+const REDIRECT_URI = "https://developers.google.com/oauthplayground"; //DONT EDIT THIS
+const MY_EMAIL = "rabiam037@gmail.com";
+
+/*POPULATE ABOVE FIELDS WITH YOUR CREDETIALS*/
+
+const oAuth2Client = new google.auth.OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI
+);
+
+oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 //Registration Code:
 
@@ -82,17 +105,39 @@ const getUser = router.get("/", async (req, res) => {
   }
 });
 
-//Adding image path to user table:
+//deleting user:
 
-const addImagePath = router.post("/addImage" ,async (req, res) => {
+const deleteUser = router.delete("/", async (req, res) => {
   const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   try {
     await verifyToken(token);
+    const { userID } = req.query;
+    console.log(userID);
+    const user = await users.findById(userID).exec();
+    if (user) {
+      const deletedUser = await users.findByIdAndRemove({ _id: userID }).exec();
+      if (!deletedUser) {
+        return res.status(404).json({ message: "Failed to delete user" });
+      }
+      return res
+        .status(204)
+        .json({ message: "User deleted successfully", deletedUser });
+    }
+  } catch (error) {
+    console.error("Error updating contact:", error);
+    return res.status(500).json({ message: "Contact not updated" });
+  }
+});
+
+//Adding image path to user table:
+
+const addImagePath = router.post("/addImage", async (req, res) => {
+  try {
     const { imagePath, email } = req.body;
-    console.log(email);
+    console.log("imageEmail", email);
     await users.findOneAndUpdate(
       { email },
       { $set: { imagePath } },
@@ -107,7 +152,7 @@ const addImagePath = router.post("/addImage" ,async (req, res) => {
 
 //Adding personal info data here:
 
-const addPersonalData = router.put("/personalInfo",  async (req, res) => {
+const addPersonalData = router.put("/personalInfo", async (req, res) => {
   const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -138,7 +183,7 @@ const addPersonalData = router.put("/personalInfo",  async (req, res) => {
 
 //Login Code:
 
-const loginUser =  async (req, res, next) => {
+const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -175,18 +220,67 @@ const loginUser =  async (req, res, next) => {
     next(error);
   }
 };
+const generateResetCode = () => {
+  return crypto.randomBytes(3).toString("hex");
+};
+const resetCode = generateResetCode();
+const sendResetCodeToEmail = async (req, res) => {
+  try {
+    const { userEmail } = req.body;
+    console.log(userEmail, "userEmail");
+
+    const ACCESS_TOKEN = await oAuth2Client.getAccessToken();
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: MY_EMAIL,
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        refreshToken: REFRESH_TOKEN,
+        accessToken: ACCESS_TOKEN,
+      },
+      tls: {
+        rejectUnauthorized: true,
+      },
+    });
+    const mailOptions = {
+      from: "rabiam037@gmail.com",
+      to: userEmail,
+      subject: "Password Reset Code",
+      text: `Your password reset code is: ${resetCode}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error);
+      } else {
+        console.log("Email sent:", info.response);
+        res.json({ message: "Email Sent" });
+      }
+    });
+  } catch (error) {
+    next(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+const confirmResetCode = async (req, res) => {
+  const { code } = req.body;
+  console.log("code ", code);
+  if (code == resetCode) {
+    res.status(201).json({ message: "Code Matched" });
+    console.log("code matched");
+  } else {
+    res.json({ message: "Code Did not Match" });
+  }
+};
 
 //updating password
 
 const updatePassword = async (req, res) => {
-  // const token = req.headers.authorization;
-  // if (!token) {
-  //   return res.status(401).json({ message: "Unauthorized" });
-  // }
   try {
-    // await verifyToken(token);
     const { email, password } = req.body;
-    console.log(email);
+    console.log(email, password);
     bcrypt.genSalt(saltRounds, function (err, salt) {
       if (err) {
         throw err;
@@ -222,10 +316,12 @@ const updatePassword = async (req, res) => {
 
 module.exports = {
   createUser,
-  loginUser,
-  // tokenVerification,
+  getUser,
+  deleteUser,
   addImagePath,
   addPersonalData,
-  getUser,
+  loginUser,
   updatePassword,
+  sendResetCodeToEmail,
+  confirmResetCode,
 };

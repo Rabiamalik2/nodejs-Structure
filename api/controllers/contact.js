@@ -70,12 +70,7 @@ const getContacts = router.get("/", async (req, res) => {
 //update Api for contact:
 
 const updateContactApi = router.put("/", async (req, res) => {
-  const token = req.headers.authorizaton;
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
   try {
-    await verifyToken(token);
     const { contactID, firstname, lastname, phone, relation } = req.body;
     const contact = await contacts.findById(contactID).exec();
     if (contact) {
@@ -112,9 +107,9 @@ const deleteContactApi = router.delete("/", async (req, res) => {
   }
   try {
     await verifyToken(token);
-    const { contactID, userID  } = req.query;
+    const { contactID, userID } = req.query;
     // const { userID } = req.body;
-    console.log(userID)
+    console.log(userID);
     const contact = await contacts.findById(contactID).exec();
     if (contact) {
       const deletedContact = await contacts
@@ -125,10 +120,10 @@ const deleteContactApi = router.delete("/", async (req, res) => {
       }
       const remainingContacts = await contacts.find({ user: userID }).exec();
       console.log("rem: ", remainingContacts.length);
-      console.log(userID)
+      console.log(userID);
       if (remainingContacts.length === 0) {
-        const user = await users.findById({ _id : userID}).exec();
-        console.log("user" ,user)
+        const user = await users.findById({ _id: userID }).exec();
+        console.log("user", user);
         if (user) {
           if (user.step === 2) {
             const updatedStep = await users.findByIdAndUpdate(
@@ -141,7 +136,9 @@ const deleteContactApi = router.delete("/", async (req, res) => {
           return res.status(201).json({ message: "step updated" });
         }
       }
-      return res.status(204).json({ message: "Contact deleted successfully" , remainingContacts });
+      return res
+        .status(204)
+        .json({ message: "Contact deleted successfully", remainingContacts });
     }
   } catch (error) {
     console.error("Error updating contact:", error);
