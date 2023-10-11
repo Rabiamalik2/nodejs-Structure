@@ -7,7 +7,7 @@ const saltRounds = 10;
 const express = require("express");
 const router = express.Router();
 const nodemailer = require("nodemailer");
-const crypto = require("crypto");
+const {generateResetCode} = require("../services/code.js")
 const { google } = require("googleapis");
 
 /*POPULATE BELOW FIELDS WITH YOUR CREDETIALS*/
@@ -220,9 +220,7 @@ const loginUser = async (req, res, next) => {
     next(error);
   }
 };
-const generateResetCode = () => {
-  return crypto.randomBytes(3).toString("hex");
-};
+
 const resetCode = generateResetCode();
 const sendResetCodeToEmail = async (req, res) => {
   try {
