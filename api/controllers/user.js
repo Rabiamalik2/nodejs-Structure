@@ -212,20 +212,12 @@ const loginUser = async (req, res, next) => {
           user,
           token,
           message: "Authentication successful",
-        })
+        });
       }
     });
   } catch (error) {
-    if (error.response) {
-      console.log("Data :" , error.response.data);
-      console.log("Status :" + error.response.status);
-    } else if (error.request) { 
-      console.log(error.request);
-    } else {
-      console.log('Error', error.message);
-    }
-    // console.error("Error during login:", error);
-    // return res.status(500).json({ message: "Internal server error", error });
+    console.error("Error during login:", error);
+    return res.status(500).json({ message: "Internal server error", error });
   }
 };
 
