@@ -7,7 +7,7 @@ const saltRounds = 10;
 const express = require("express");
 const router = express.Router();
 const nodemailer = require("nodemailer");
-const {generateResetCode} = require("../services/code.js")
+const { generateResetCode } = require("../services/code.js");
 const { google } = require("googleapis");
 
 /*POPULATE BELOW FIELDS WITH YOUR CREDETIALS*/
@@ -186,38 +186,46 @@ const addPersonalData = router.put("/personalInfo", async (req, res) => {
 const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    console.log(email, password);
     if (!email || !password) {
-      throw new ErrorHandler("Please Enter Email & Password", 400);
+      return res.status(400).json({ message: "Please Enter Email & Password" });
     }
-
     const user = await users.findOne({ email }).select("+password");
     if (!user) {
-      throw new ErrorHandler("Authentication failed", 401);
+      console.error("User not found");
+      return res.status(401).json({ message: "Authentication failed" });
     }
-    bcrypt.compare(password, user.password, function (err, isMatch) {
+    bcrypt.compare(password, user.password, (err, isMatch) => {
       if (err) {
-        throw err;
-        // } else if (!isMatch) {
-        //   console.log("pass1", password);
-        //   console.log("pass2", user.password);
-        //   console.log("Password doesn't match!");
-        //   return res.status(400).json({ message: "Password doesn't match!" });
-        // }
+        console.error("Error comparing passwords:", err);
+        return res.status(500).json({ message: "Internal server error" });
+      } else if (!isMatch) {
+        console.log("Password doesn't match!");
+        return res.status(401).json({ message: "Password doesn't match!" });
       } else {
-        console.log(isMatch, "isMatch");
         console.log("Password matches!");
         const token = jwt.sign({ userEmail: user.email }, secretKey, {
           expiresIn: "1hr",
         });
+        console.log(user);
         res.status(200).json({
           user,
           token,
           message: "Authentication successful",
-        });
+        })
       }
     });
   } catch (error) {
-    next(error);
+    if (error.response) {
+      console.log("Data :" , error.response.data);
+      console.log("Status :" + error.response.status);
+    } else if (error.request) { 
+      console.log(error.request);
+    } else {
+      console.log('Error', error.message);
+    }
+    // console.error("Error during login:", error);
+    // return res.status(500).json({ message: "Internal server error", error });
   }
 };
 
