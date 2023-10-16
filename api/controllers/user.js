@@ -47,6 +47,9 @@ const createUser = router.post("/", async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "Email is already in use" });
     }
+    else{
+      return res.status(404).json({ message: "User not found" });
+    }
     bcrypt.genSalt(saltRounds, function (err, salt) {
       if (err) {
         throw err;
