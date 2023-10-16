@@ -136,7 +136,7 @@ const deleteUser = router.delete("/", async (req, res) => {
 
 const addImagePath = router.post("/addImage", async (req, res) => {
   try {
-    const { imagePath, email } = req.body;
+    const { email, imagePath } = req.body;
     console.log("imageEmail", email);
     await users.findOneAndUpdate(
       { email },
