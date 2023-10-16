@@ -47,9 +47,7 @@ const createUser = router.post("/", async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "Email is already in use" });
     }
-    else{
-      return res.status(404).json({ message: "User not found" });
-    }
+    
     bcrypt.genSalt(saltRounds, function (err, salt) {
       if (err) {
         throw err;
@@ -197,7 +195,7 @@ const loginUser = async (req, res, next) => {
     const user = await users.findOne({ email }).select("+password");
     if (!user) {
       console.error("User not found");
-      return res.status(401).json({ message: "Authentication failed" });
+      return res.status(404).json({ message: "User not found" });
     }
     bcrypt.compare(password, user.password, (err, isMatch) => {
       if (err) {
