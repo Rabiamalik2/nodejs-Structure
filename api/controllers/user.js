@@ -193,7 +193,7 @@ const loginUser = async (req, res, next) => {
     if (!email || !password) {
       return res.status(400).json({ message: "Please Enter Email & Password" });
     }
-    const user = await users.findOne({ normalizedEmail }).select("+password");
+    const user = await users.findOne({ email: normalizedEmail }).select("+password");
     if (!user) {
       console.error("User not found");
       return res.status(404).json({ message: "User not found" });
