@@ -189,10 +189,11 @@ const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     console.log(email, password);
+    const normalizedEmail = email.toLowerCase();
     if (!email || !password) {
       return res.status(400).json({ message: "Please Enter Email & Password" });
     }
-    const user = await users.findOne({ email }).select("+password");
+    const user = await users.findOne({ normalizedEmail }).select("+password");
     if (!user) {
       console.error("User not found");
       return res.status(404).json({ message: "User not found" });

@@ -133,7 +133,9 @@ const deleteContactApi = router.delete("/", async (req, res) => {
             );
             console.log("updated step: ", updatedStep);
           }
-          return res.status(201).json({ message: "step updated" });
+          return res
+            .status(201)
+            .json({ message: "step updated", remainingContacts });
         }
       }
       return res
