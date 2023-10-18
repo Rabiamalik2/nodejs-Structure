@@ -190,6 +190,7 @@ const loginUser = async (req, res, next) => {
     const { email, password } = req.body;
     console.log(email, password);
     const normalizedEmail = email.toLowerCase();
+    console.log(normalizedEmail);
     if (!email || !password) {
       return res.status(400).json({ message: "Please Enter Email & Password" });
     }
