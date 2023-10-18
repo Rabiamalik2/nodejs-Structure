@@ -47,7 +47,7 @@ const createUser = router.post("/", async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "Email is already in use" });
     }
-    
+
     bcrypt.genSalt(saltRounds, function (err, salt) {
       if (err) {
         throw err;
@@ -145,7 +145,7 @@ const addImagePath = router.post("/addImage", async (req, res) => {
       { new: true }
     );
     console.log(imagePath);
-    res.status(200).json({message: "image added successfully"})
+    res.status(200).json({ message: "image added successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -194,7 +194,9 @@ const loginUser = async (req, res, next) => {
     if (!email || !password) {
       return res.status(400).json({ message: "Please Enter Email & Password" });
     }
-    const user = await users.findOne({ email: normalizedEmail }).select("+password");
+    const user = await users
+      .findOne({ email: normalizedEmail })
+      .select("+password");
     if (!user) {
       console.error("User not found");
       return res.status(404).json({ message: "User not found" });
@@ -316,6 +318,11 @@ const updatePassword = async (req, res) => {
   }
 };
 
+const signinwithGoogle = async (req, res) => {
+  const { token } = req.body;
+  console.log(token);
+};
+
 module.exports = {
   createUser,
   getUser,
@@ -326,4 +333,5 @@ module.exports = {
   updatePassword,
   sendResetCodeToEmail,
   confirmResetCode,
+  signinwithGoogle,
 };
