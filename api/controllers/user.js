@@ -323,7 +323,7 @@ const signinwithGoogle = async (req, res) => {
     const { email, idToken } = req.body;
     console.log(email, idToken);
     const normalizedEmail = email.toLowerCase();
-
+    const client = new OAuth2Client(CLIENT_ID);
     const ticket = await client.verifyIdToken({
       idToken: idToken,
       audience: CLIENT_ID,
