@@ -331,41 +331,35 @@ const signinwithGoogle = async (req, res) => {
       audience:
         "416536186096-94n53m91gd4vdi536fn6lea7qfi9tmqb.apps.googleusercontent.com",
     });
+    const payload = ticket.getPayload();
+    const userId = payload.sub; // Google user ID
+    console.log(payload);
+    console.log(payload.sub);
+    const user = await users.findOne({ email: normalizedEmail });
+    if (!user) {
+      console.error("User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    if (ticket) {
-      const payload = ticket.getPayload();
-      const userId = payload.sub; // Google user ID
-      console.log(payload);
-      console.log(payload.sub);
-      const user = await users.findOne({ email: normalizedEmail });
-      if (!user) {
-        console.error("User not found");
-        return res.status(404).json({ message: "User not found" });
-      }
+    // Verify that the Google user ID matches your user database
+    if (userId === user._id) {
+      console.log("User authenticated successfully.");
 
-      // Verify that the Google user ID matches your user database
-      if (userId === user._id) {
-        console.log("User authenticated successfully.");
+      // Create a JWT token
+      const token = jwt.sign({ userEmail: user.email }, secretKey, {
+        expiresIn: "1hr",
+      });
 
-        // Create a JWT token
-        const token = jwt.sign({ userEmail: user.email }, secretKey, {
-          expiresIn: "1hr",
-        });
+      console.log(user);
 
-        console.log(user);
-
-        res.status(200).json({
-          user,
-          token,
-          message: "Authentication successful",
-        });
-      } else {
-        console.log("Tokens do not match. Access denied.");
-        return res.status(401).json({ message: "Access denied" });
-      }
+      res.status(200).json({
+        user,
+        token,
+        message: "Authentication successful",
+      });
     } else {
-      console.log("Invalid token");
-      return res.status(401).json({ message: "Invalid token" });
+      console.log("Tokens do not match. Access denied.");
+      return res.status(401).json({ message: "Access denied" });
     }
   } catch (error) {
     console.error("Error during login through Google:", error);
