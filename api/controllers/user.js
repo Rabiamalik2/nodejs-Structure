@@ -331,16 +331,20 @@ const signinwithGoogle = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     console.log("Password matches!");
-    // const token = jwt.sign({ userEmail: user.email }, secretKey, {
-    //   expiresIn: "1hr",
-    // });
-    console.log(user);
-    const token = jwt.verify(accesstoken, secretKey);
-    res.status(200).json({
-      user,
-      token,
-      message: "Authentication successful",
+    const token = jwt.sign({ userEmail: user.email }, secretKey, {
+      expiresIn: "1hr",
     });
+    console.log(user);
+    const decoded = jwt.verify(token, secretKey);
+    if (decoded.userId === accesstoken.userId) {
+      res.status(200).json({
+        user,
+        token,
+        message: "Authentication successful",
+      });
+    } else {
+      console.log("Tokens do not match. Access denied.");
+    }
   } catch (error) {
     console.error("Error during login through google:", error);
     return res.status(500).json({ message: "Internal server error", error });
