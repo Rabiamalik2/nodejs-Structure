@@ -320,16 +320,19 @@ const updatePassword = async (req, res) => {
 
 const signinwithGoogle = async (req, res) => {
   try {
-    const { email, accesstoken } = req.body;
-    console.log(email, accesstoken);
+    const { email, idToken } = req.body;
+    console.log(email, idToken);
     const normalizedEmail = email.toLowerCase();
     const client = new OAuth2Client(CLIENT_ID);
     const ticket = await client.verifyIdToken({
-      idToken: accesstoken,
+      idToken: idToken,
       audience: CLIENT_ID,
     });
     console.log(ticket);
     if (ticket) {
+      const payload = ticket.getPayload();
+      const userId = payload.sub; // Google user ID
+
       const user = await users.findOne({ email: normalizedEmail });
       if (!user) {
         console.error("User not found");
@@ -340,8 +343,7 @@ const signinwithGoogle = async (req, res) => {
         expiresIn: "1hr",
       });
       console.log(user);
-      const decoded = jwt.verify(token, secretKey);
-      if (decoded.userId === accesstoken.userId) {
+      if (userId === idToken.userId) {
         res.status(200).json({
           user,
           token,
