@@ -331,10 +331,11 @@ const signinwithGoogle = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     console.log("Password matches!");
-    const token = jwt.sign({ userEmail: user.email }, secretKey, {
-      expiresIn: "1hr",
-    });
+    // const token = jwt.sign({ userEmail: user.email }, secretKey, {
+    //   expiresIn: "1hr",
+    // });
     console.log(user);
+    const token = jwt.verify(accesstoken, secretKey);
     res.status(200).json({
       user,
       token,
