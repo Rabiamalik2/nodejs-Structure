@@ -320,21 +320,20 @@ const updatePassword = async (req, res) => {
 
 const signinwithGoogle = async (req, res) => {
   try {
-    const { email, idToken } = req.body;
-    console.log(email, idToken);
-    const normalizedEmail = email.toLowerCase();
+    const { userInfo } = req.body;
+    console.log(userInfo);
+    const normalizedEmail = userInfo.email.toLowerCase();
     const client = new OAuth2Client(
       "416536186096-94n53m91gd4vdi536fn6lea7qfi9tmqb.apps.googleusercontent.com"
     );
     const ticket = await client.verifyIdToken({
-      idToken: idToken,
+      idToken: userInfo.idToken,
       audience:
         "416536186096-94n53m91gd4vdi536fn6lea7qfi9tmqb.apps.googleusercontent.com",
     });
     const payload = ticket.getPayload();
     const userId = payload.sub; // Google user ID
     console.log(payload);
-    console.log(payload.sub);
     const user = await users.findOne({ email: normalizedEmail });
     if (!user) {
       console.error("User not found");
