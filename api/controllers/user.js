@@ -335,7 +335,8 @@ const signinwithGoogle = async (req, res) => {
     if (ticket) {
       const payload = ticket.getPayload();
       const userId = payload.sub; // Google user ID
-
+      console.log(payload);
+      console.log(payload.sub);
       const user = await users.findOne({ email: normalizedEmail });
       if (!user) {
         console.error("User not found");
@@ -343,7 +344,7 @@ const signinwithGoogle = async (req, res) => {
       }
 
       // Verify that the Google user ID matches your user database
-      if (userId === user.googleUserId) {
+      if (userId === user._id) {
         console.log("User authenticated successfully.");
 
         // Create a JWT token
