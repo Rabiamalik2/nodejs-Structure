@@ -330,27 +330,26 @@ const signinwithGoogle = async (req, res) => {
       console.error("User not found");
       return res.status(404).json({ message: "User not found" });
     }
-    // bcrypt.compare(password, user.password, (err, isMatch) => {
-    //   if (err) {
-    //     console.error("Error comparing passwords:", err);
-    //     return res.status(500).json({ message: "Internal server error" });
-    //   } else if (!isMatch) {
-    //     console.log("Password doesn't match!");
-    //     return res.status(401).json({ message: "Password doesn't match!" });
-    //   }
-    else {
-      //     console.log("Password matches!");
-      //     const token = jwt.sign({ userEmail: user.email }, secretKey, {
-      //       expiresIn: "1hr",
-      //     });
-      console.log(user);
-      res.status(200).json({
-        user,
-        token,
-        message: "Authentication successful",
-      });
-    }
-    // });
+    bcrypt.compare(token, user.password, (err, isMatch) => {
+      if (err) {
+        console.error("Error comparing passwords:", err);
+        return res.status(500).json({ message: "Internal server error" });
+      } else if (!isMatch) {
+        console.log("Password doesn't match!");
+        return res.status(401).json({ message: "Password doesn't match!" });
+      } else {
+        console.log("Password matches!");
+        const token = jwt.sign({ userEmail: user.email }, secretKey, {
+          expiresIn: "1hr",
+        });
+        console.log(user);
+        res.status(200).json({
+          user,
+          token,
+          message: "Authentication successful",
+        });
+      }
+    });
   } catch (error) {
     console.error("Error during login through google:", error);
     return res.status(500).json({ message: "Internal server error", error });
