@@ -9,7 +9,7 @@ const router = express.Router();
 const nodemailer = require("nodemailer");
 const { generateResetCode } = require("../services/code.js");
 const { google } = require("googleapis");
-
+const { OAuth2Client } = require("google-auth-library");
 /*POPULATE BELOW FIELDS WITH YOUR CREDETIALS*/
 
 const CLIENT_ID =
@@ -323,27 +323,33 @@ const signinwithGoogle = async (req, res) => {
     const { email, accesstoken } = req.body;
     console.log(email, accesstoken);
     const normalizedEmail = email.toLowerCase();
-    const user = await users
-      .findOne({ email: normalizedEmail })
-      .select("+password");
-    if (!user) {
-      console.error("User not found");
-      return res.status(404).json({ message: "User not found" });
-    }
-    console.log("Password matches!");
-    const token = jwt.sign({ userEmail: user.email }, secretKey, {
-      expiresIn: "1hr",
+    const client = new OAuth2Client(CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken: accesstoken,
+      audience: CLIENT_ID,
     });
-    console.log(user);
-    const decoded = jwt.verify(token, secretKey);
-    if (decoded.userId === accesstoken.userId) {
-      res.status(200).json({
-        user,
-        token,
-        message: "Authentication successful",
+    console.log(ticket);
+    if (ticket) {
+      const user = await users.findOne({ email: normalizedEmail });
+      if (!user) {
+        console.error("User not found");
+        return res.status(404).json({ message: "User not found" });
+      }
+      console.log("Password matches!");
+      const token = jwt.sign({ userEmail: user.email }, secretKey, {
+        expiresIn: "1hr",
       });
-    } else {
-      console.log("Tokens do not match. Access denied.");
+      console.log(user);
+      const decoded = jwt.verify(token, secretKey);
+      if (decoded.userId === accesstoken.userId) {
+        res.status(200).json({
+          user,
+          token,
+          message: "Authentication successful",
+        });
+      } else {
+        console.log("Tokens do not match. Access denied.");
+      }
     }
   } catch (error) {
     console.error("Error during login through google:", error);
