@@ -322,7 +322,7 @@ const signinwithGoogle = async (req, res) => {
   try {
     const { userInfo } = req.body;
     console.log(userInfo);
-    const normalizedEmail = userInfo.email.toLowerCase();
+    const normalizedEmail = userInfo.user.email.toLowerCase();
     const client = new OAuth2Client(
       "416536186096-94n53m91gd4vdi536fn6lea7qfi9tmqb.apps.googleusercontent.com"
     );
