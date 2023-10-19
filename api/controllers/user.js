@@ -323,12 +323,12 @@ const signinwithGoogle = async (req, res) => {
     const { email, idToken } = req.body;
     console.log(email, idToken);
     const normalizedEmail = email.toLowerCase();
-    const client = new OAuth2Client(CLIENT_ID);
+
     const ticket = await client.verifyIdToken({
       idToken: idToken,
       audience: CLIENT_ID,
     });
-    console.log(ticket);
+
     if (ticket) {
       const payload = ticket.getPayload();
       const userId = payload.sub; // Google user ID
@@ -338,12 +338,18 @@ const signinwithGoogle = async (req, res) => {
         console.error("User not found");
         return res.status(404).json({ message: "User not found" });
       }
-      console.log("Password matches!");
-      const token = jwt.sign({ userEmail: user.email }, secretKey, {
-        expiresIn: "1hr",
-      });
-      console.log(user);
-      if (userId === idToken.userId) {
+
+      // Verify that the Google user ID matches your user database
+      if (userId === user.googleUserId) {
+        console.log("User authenticated successfully.");
+
+        // Create a JWT token
+        const token = jwt.sign({ userEmail: user.email }, secretKey, {
+          expiresIn: "1hr",
+        });
+
+        console.log(user);
+
         res.status(200).json({
           user,
           token,
@@ -351,10 +357,14 @@ const signinwithGoogle = async (req, res) => {
         });
       } else {
         console.log("Tokens do not match. Access denied.");
+        return res.status(401).json({ message: "Access denied" });
       }
+    } else {
+      console.log("Invalid token");
+      return res.status(401).json({ message: "Invalid token" });
     }
   } catch (error) {
-    console.error("Error during login through google:", error);
+    console.error("Error during login through Google:", error);
     return res.status(500).json({ message: "Internal server error", error });
   }
 };
