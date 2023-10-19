@@ -332,16 +332,16 @@ const signinwithGoogle = async (req, res) => {
         "416536186096-94n53m91gd4vdi536fn6lea7qfi9tmqb.apps.googleusercontent.com",
     });
     const payload = ticket.getPayload();
-    const userId = payload.sub; // Google user ID
+    const userEmail = payload.email; // Google user ID
     console.log(payload);
     const user = await users.findOne({ email: normalizedEmail });
     if (!user) {
       console.error("User not found");
       return res.status(404).json({ message: "User not found" });
     }
-
+    console.log(user, user.email);
     // Verify that the Google user ID matches your user database
-    if (userId === user._id) {
+    if (userEmail === user.email) {
       console.log("User authenticated successfully.");
 
       // Create a JWT token
