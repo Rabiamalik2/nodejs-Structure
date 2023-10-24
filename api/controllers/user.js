@@ -1,4 +1,5 @@
 const users = require("../models/userModel.js");
+const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const { verifyToken } = require("../services/jwtService.js");
 const bcrypt = require("bcrypt");
@@ -336,21 +337,33 @@ const signinwithGoogle = async (req, res) => {
     console.log(payload);
     const user = await users.findOne({ email: normalizedEmail });
     if (!user) {
-      console.error("User not found");
-      return res.status(404).json({ message: "User not found" });
-    }
-    console.log(user, user.email);
-    // Verify that the Google user ID matches your user database
-    if (userEmail === user.email) {
+      console.log(payload, "notuser");
+      const user = await users.create({
+        step: 1,
+        firstname: payload.given_name,
+        lastname: payload.family_name,
+        phone: "",
+        email: payload.email,
+        password: "",
+        imagePath: payload.picture,
+        dob: null,
+        gender: null,
+        homeAddress: null,
+        questionaireKey: false,
+      });
+      const token = jwt.sign({ userEmail: user.email }, secretKey, {
+        expiresIn: "1h",
+      });
+      res.status(201).json({
+        user,
+        token,
+        message: "Registration successful",
+      });
+    } else if (userEmail === user.email) {
       console.log("User authenticated successfully.");
-
-      // Create a JWT token
       const token = jwt.sign({ userEmail: user.email }, secretKey, {
         expiresIn: "1hr",
       });
-
-      console.log(user);
-
       res.status(200).json({
         user,
         token,
@@ -366,6 +379,67 @@ const signinwithGoogle = async (req, res) => {
   }
 };
 
+const facebookLogin = async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+    console.log("AccessToken", accessToken);
+    const response = await fetch(
+      `https://graph.facebook.com/me?fields=name,email,picture.type(large)&access_token=${accessToken}`
+    );
+    if (response.ok) {
+      const userData = await response.json();
+      console.log("User Email: ", userData.email);
+      const userName = userData.name;
+      const userProfilePicture = userData.picture.data.url;
+      const [firstName, lastName] = userName.split(" ");
+      const userEmail = userData.email.toLowerCase();
+      console.log("User First Name: ", firstName);
+      console.log("User Last Name: ", lastName);
+      console.log("User Email: ", userEmail);
+      console.log("User Profile Picture: ", userProfilePicture);
+      const user = await users.findOne({ email: userEmail });
+      if (!user) {
+        const user = await users.create({
+          step: 1,
+          firstname: firstName,
+          lastname: lastName,
+          phone: "",
+          email: userEmail,
+          password: "",
+          imagePath: userProfilePicture,
+          dob: null,
+          gender: null,
+          homeAddress: null,
+          questionaireKey: false,
+        });
+        const token = jwt.sign({ userEmail: user.email }, secretKey, {
+          expiresIn: "1h",
+        });
+        res.status(201).json({
+          user,
+          token,
+          message: "Registration successful",
+        });
+      } else if (userEmail === user.email) {
+        console.log("User authenticated successfully.");
+        const token = jwt.sign({ userEmail: user.email }, secretKey, {
+          expiresIn: "1hr",
+        });
+        res.status(200).json({
+          user,
+          token,
+          message: "Authentication successful",
+        });
+      } else {
+        console.log("Tokens do not match. Access denied.");
+        return res.status(401).json({ message: "Access denied" });
+      }
+    }
+  } catch (error) {
+    console.error("Error during login through fb:", error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};
 module.exports = {
   createUser,
   getUser,
@@ -377,4 +451,5 @@ module.exports = {
   sendResetCodeToEmail,
   confirmResetCode,
   signinwithGoogle,
+  facebookLogin,
 };

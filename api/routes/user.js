@@ -13,6 +13,7 @@ const {
   sendResetCodeToEmail,
   confirmResetCode,
   signinwithGoogle,
+  facebookLogin,
 } = require("../controllers/user.js");
 
 //user_routes
@@ -35,6 +36,8 @@ router.post("/codeConfirmation", confirmResetCode);
 router.put("/updatePassword", updatePassword);
 
 router.post("/googleLogin", signinwithGoogle);
+
+router.post("/fbLogin", facebookLogin);
 
 router;
 
